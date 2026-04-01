@@ -1,222 +1,235 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>WorkerConnect</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Job Connect Platform</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      margin: 0;
-      background: #f5f7fa;
-    }
+<style>
+body {
+    font-family: Arial;
+    background: #f2f2f2;
+    text-align: center;
+}
 
-    header {
-      background: white;
-      padding: 15px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
+.container {
+    background: white;
+    padding: 20px;
+    margin: 50px auto;
+    width: 320px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px gray;
+}
 
-    header h2 {
-      color: #ff6600;
-    }
+input, select {
+    padding: 10px;
+    margin: 8px;
+    width: 90%;
+}
 
-    .hero {
-      text-align: center;
-      padding: 40px 20px;
-    }
+button {
+    padding: 10px;
+    margin: 5px;
+    width: 120px;
+    cursor: pointer;
+}
 
-    .hero h1 {
-      font-size: 28px;
-    }
-
-    .hero span {
-      color: #ff6600;
-    }
-
-    .btn {
-      display: block;
-      margin: 10px auto;
-      padding: 12px;
-      width: 80%;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    .primary {
-      background: #ff6600;
-      color: white;
-    }
-
-    .secondary {
-      background: white;
-      border: 1px solid #ccc;
-    }
-
-    .container {
-      padding: 20px;
-    }
-
-    .card {
-      background: white;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-
-    video, img {
-      width: 100%;
-      margin-top: 10px;
-      border-radius: 8px;
-    }
-
-    .hidden {
-      display: none;
-    }
-  </style>
+.hidden {
+    display: none;
+}
+</style>
 </head>
 
 <body>
 
-<header>
-  <h2>WorkerConnect</h2>
-</header>
+<div class="container">
 
-<!-- HOME -->
-<div id="home" class="hero">
-  <h1>Connect with the <span>right workers, instantly</span></h1>
-  <p>Find part-time or full-time workers easily.</p>
+<h1>Job Connect</h1>
 
-  <button class="btn primary" onclick="showWorker()">I'm a Worker</button>
-  <button class="btn secondary" onclick="showEmployer()">I'm an Employer</button>
+<!-- Role Selection -->
+<div id="roleSection">
+    <h3>Select Role</h3>
+    <button onclick="selectRole('worker')">Worker</button>
+    <button onclick="selectRole('employer')">Employer</button>
 </div>
 
-<!-- WORKER PROFILE -->
-<div id="workerPage" class="container hidden">
-  <h2>Create Worker Profile</h2>
+<!-- Login/Register -->
+<div id="authSection" class="hidden">
+    <h3 id="roleTitle"></h3>
 
-  <input id="wName" placeholder="Name">
-  <input id="wSkill" placeholder="Skill (Electrician, Carpenter)">
-  <input id="wPhone" placeholder="Phone Number">
-  <textarea id="wDesc" placeholder="Job Description"></textarea>
+    <input type="text" id="name" placeholder="Enter Name">
+    <input type="password" id="password" placeholder="Enter Password">
 
-  <label>Upload Video Resume</label>
-  <input type="file" id="videoUpload" accept="video/*">
-
-  <label>Upload Sample Images</label>
-  <input type="file" id="imageUpload" accept="image/*" multiple>
-
-  <button class="btn primary" onclick="saveProfile()">Save Profile</button>
-
-  <h3>Your Profile</h3>
-  <div id="profileDisplay"></div>
-
-  <button onclick="goHome()">Back</button>
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
 </div>
 
-<!-- EMPLOYER PAGE -->
-<div id="employerPage" class="container hidden">
-  <h2>Available Workers</h2>
-  <div id="workersList"></div>
+<!-- Worker Dashboard -->
+<div id="workerDashboard" class="hidden">
+    <h2>Worker Dashboard</h2>
 
-  <button onclick="goHome()">Back</button>
+    <input type="text" id="workType" placeholder="Type of Work">
+    <input type="text" id="location" placeholder="Location">
+    <select id="workerType">
+        <option value="Individual">Individual</option>
+        <option value="Group">Group</option>
+    </select>
+
+    <input type="number" id="groupSize" placeholder="Group Size (if any)">
+    <input type="number" id="transport" placeholder="Transport Charges">
+
+    <button onclick="saveWorkerProfile()">Save Profile</button>
+
+    <h3>Your Profile</h3>
+    <p id="workerProfile"></p>
+
+    <button onclick="logout()">Logout</button>
+</div>
+
+<!-- Employer Dashboard -->
+<div id="employerDashboard" class="hidden">
+    <h2>Employer Dashboard</h2>
+
+    <input type="text" id="jobName" placeholder="Work Name">
+    <input type="text" id="jobLocation" placeholder="Location">
+    <input type="number" id="salary" placeholder="Salary / Per Day">
+    <input type="number" id="workersNeeded" placeholder="Workers Needed">
+    <input type="number" id="days" placeholder="Number of Days">
+
+    <button onclick="postJob()">Post Job</button>
+
+    <h3>Available Workers</h3>
+    <p id="workerList"></p>
+
+    <button onclick="logout()">Logout</button>
+</div>
+
 </div>
 
 <script>
-  let workers = JSON.parse(localStorage.getItem("workers")) || [];
+let currentUser = "";
+let currentRole = "";
 
-  function showWorker() {
-    home.classList.add("hidden");
-    workerPage.classList.remove("hidden");
-  }
+// Select Role
+function selectRole(role) {
+    currentRole = role;
+    document.getElementById("authSection").classList.remove("hidden");
+    document.getElementById("roleTitle").innerText = role.toUpperCase() + " LOGIN";
+}
 
-  function showEmployer() {
-    home.classList.add("hidden");
-    employerPage.classList.remove("hidden");
-    displayWorkers();
-  }
+// Register
+function register() {
+    let name = document.getElementById("name").value;
+    let password = document.getElementById("password").value;
 
-  function goHome() {
-    location.reload();
-  }
+    if (!name || !password) {
+        alert("Fill all fields");
+        return;
+    }
 
-  function saveProfile() {
-    let worker = {
-      name: wName.value,
-      skill: wSkill.value,
-      phone: wPhone.value,
-      desc: wDesc.value,
-      video: "",
-      images: []
+    let user = {
+        name,
+        password,
+        role: currentRole
     };
 
-    // Video
-    let videoFile = videoUpload.files[0];
-    if (videoFile) {
-      worker.video = URL.createObjectURL(videoFile);
+    localStorage.setItem(name, JSON.stringify(user));
+    alert("Registered Successfully!");
+}
+
+// Login
+function login() {
+    let name = document.getElementById("name").value;
+    let password = document.getElementById("password").value;
+
+    let userData = localStorage.getItem(name);
+
+    if (!userData) {
+        alert("User not found");
+        return;
     }
 
-    // Images
-    let imageFiles = imageUpload.files;
-    for (let file of imageFiles) {
-      worker.images.push(URL.createObjectURL(file));
+    let user = JSON.parse(userData);
+
+    if (user.password === password && user.role === currentRole) {
+        currentUser = name;
+
+        document.getElementById("roleSection").classList.add("hidden");
+        document.getElementById("authSection").classList.add("hidden");
+
+        if (currentRole === "worker") {
+            document.getElementById("workerDashboard").classList.remove("hidden");
+            loadWorkerProfile();
+        } else {
+            document.getElementById("employerDashboard").classList.remove("hidden");
+            showWorkers();
+        }
+
+    } else {
+        alert("Invalid credentials");
     }
+}
 
-    workers.push(worker);
-    localStorage.setItem("workers", JSON.stringify(workers));
+// Save Worker Profile
+function saveWorkerProfile() {
+    let profile = {
+        workType: document.getElementById("workType").value,
+        location: document.getElementById("location").value,
+        type: document.getElementById("workerType").value,
+        groupSize: document.getElementById("groupSize").value,
+        transport: document.getElementById("transport").value
+    };
 
+    localStorage.setItem("worker_" + currentUser, JSON.stringify(profile));
     alert("Profile Saved!");
-    displayProfile(worker);
-  }
+    loadWorkerProfile();
+}
 
-  function displayProfile(worker) {
-    profileDisplay.innerHTML = `
-      <div class="card">
-        <h3>${worker.name}</h3>
-        <p><b>Skill:</b> ${worker.skill}</p>
-        <p><b>Description:</b> ${worker.desc}</p>
-        <p><b>Phone:</b> ${worker.phone}</p>
+// Load Worker Profile
+function loadWorkerProfile() {
+    let data = localStorage.getItem("worker_" + currentUser);
+    if (data) {
+        let p = JSON.parse(data);
+        document.getElementById("workerProfile").innerText =
+            `Work: ${p.workType}, Location: ${p.location}, Type: ${p.type}, Group Size: ${p.groupSize}, Transport: ${p.transport}`;
+    }
+}
 
-        ${worker.video ? `<video controls src="${worker.video}"></video>` : ""}
+// Post Job
+function postJob() {
+    let job = {
+        name: document.getElementById("jobName").value,
+        location: document.getElementById("jobLocation").value,
+        salary: document.getElementById("salary").value,
+        workers: document.getElementById("workersNeeded").value,
+        days: document.getElementById("days").value
+    };
 
-        ${worker.images.map(img => `<img src="${img}">`).join("")}
-      </div>
-    `;
-  }
+    localStorage.setItem("job_" + Date.now(), JSON.stringify(job));
+    alert("Job Posted!");
+}
 
-  function displayWorkers() {
-    workersList.innerHTML = "";
+// Show Workers
+function showWorkers() {
+    let output = "";
 
-    workers.forEach(w => {
-      workersList.innerHTML += `
-        <div class="card">
-          <h3>${w.name}</h3>
-          <p><b>Skill:</b> ${w.skill}</p>
-          <p>${w.desc}</p>
-          <p><b>Contact:</b> ${w.phone}</p>
+    for (let i = 0; i < localStorage.length; i++) {
+        let key = localStorage.key(i);
 
-          ${w.video ? `<video controls src="${w.video}"></video>` : ""}
+        if (key.startsWith("worker_")) {
+            let w = JSON.parse(localStorage.getItem(key));
+            output += `Work: ${w.workType}, Location: ${w.location}<br>`;
+        }
+    }
 
-          ${w.images.map(img => `<img src="${img}">`).join("")}
-        </div>
-      `;
-    });
-  }
+    document.getElementById("workerList").innerHTML = output || "No workers available";
+}
+
+// Logout
+function logout() {
+    location.reload();
+}
 </script>
 
 </body>
 </html>
+  
