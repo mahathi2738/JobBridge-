@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WorkerConnect Advanced</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      text-align: center;
+      color: white;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .card {
+      background: #f1f1f1;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .btn-small {
+      width: auto;
+      padding: 5px 10px;
+      margin-top: 5px;
+      background: green;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>WorkerConnect</h1>
+
+<div class="container" id="authBox">
+  <h2>Register</h2>
+  <input id="name" placeholder="Name">
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+
+  <select id="role">
+    <option value="worker">Worker</option>
+    <option value="employer">Employer</option>
+  </select>
+
+  <button onclick="register()">Register</button>
+
+  <hr>
+
+  <h2>Login</h2>
+  <input id="loginEmail" placeholder="Email">
+  <input id="loginPassword" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- WORKER DASHBOARD -->
+<div id="workerDashboard" class="container hidden">
+  <h2>Available Jobs</h2>
+  <div id="jobList"></div>
+
+  <h3>Applied Jobs</h3>
+  <div id="appliedJobs"></div>
+
+  <button onclick="logout()">Logout</button>
+</div>
+
+<!-- EMPLOYER DASHBOARD -->
+<div id="employerDashboard" class="container hidden">
+  <h2>Post Job</h2>
+
+  <input id="jobTitle" placeholder="Job Title">
+  <input id="jobLocation" placeholder="Location">
+  <input id="jobSalary" placeholder="Salary">
+  <input id="workersNeeded" placeholder="Workers Needed">
+
+  <button onclick="postJob()">Post Job</button>
+
+  <h3>Your Jobs</h3>
+  <div id="postedJobs"></div>
+
+  <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+  let users = JSON.parse(localStorage.getItem("users")) || [];
+  let jobs = JSON.parse(localStorage.getItem("jobs")) || [];
+  let currentUser = null;
+
+  function register() {
+    let user = {
+      name: name.value,
+      email: email.value,
+      password: password.value,
+      role: role.value
+    };
+
+    users.push(user);
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Registered!");
+  }
+
+  function login() {
+    let user = users.find(u =>
+      u.email === loginEmail.value &&
+      u.password === loginPassword.value
+    );
+
+    if (!user) return alert("Invalid Login");
+
+    currentUser = user;
+    authBox.style.display = "none";
+
+    if (user.role === "worker") {
+      workerDashboard.classList.remove("hidden");
+      showJobs();
+      showAppliedJobs();
+    } else {
+      employerDashboard.classList.remove("hidden");
+      showPostedJobs();
+    }
+  }
+
+  function postJob() {
+    let job = {
+      id: Date.now(),
+      title: jobTitle.value,
+      location: jobLocation.value,
+      salary: jobSalary.value,
+      workersNeeded: workersNeeded.value,
+      applicants: [],
+      selected: []
+    };
+
+    jobs.push(job);
+    localStorage.setItem("jobs", JSON.stringify(jobs));
+    showPostedJobs();
+  }
+
+  function showJobs() {
+    jobList.innerHTML = "";
+
+    jobs.forEach(job => {
+      jobList.innerHTML += `
+        <div class="card">
+          <h4>${job.title}</h4>
+          <p>${job.location}</p>
+          <p>Salary: ${job.salary}</p>
+          <button class="btn-small" onclick="applyJob(${job.id})">Apply</button>
+        </div>
+      `;
+    });
+  }
+
+  function applyJob(id) {
+    let job = jobs.find(j => j.id === id);
+
+    if (!job.applicants.includes(currentUser.email)) {
+      job.applicants.push(currentUser.email);
+    }
+
+    localStorage.setItem("jobs", JSON.stringify(jobs));
+    showAppliedJobs();
+    alert("Applied!");
+  }
+
+  function showAppliedJobs() {
+    appliedJobs.innerHTML = "";
+
+    jobs.forEach(job => {
+      if (job.applicants.includes(currentUser.email)) {
+        appliedJobs.innerHTML += `
+          <div class="card">
+            <h4>${job.title}</h4>
+            <p>Status: ${job.selected.includes(currentUser.email) ? "Selected" : "Pending"}</p>
+          </div>
+        `;
+      }
+    });
+  }
+
+  function showPostedJobs() {
+    postedJobs.innerHTML = "";
+
+    jobs.forEach(job => {
+      let applicants = job.applicants.map(a => `
+        <div>
+          ${a}
+          <button onclick="selectWorker(${job.id}, '${a}')">Select</button>
+        </div>
+      `).join("");
+
+      postedJobs.innerHTML += `
+        <div class="card">
+          <h4>${job.title}</h4>
+          <p>${job.location}</p>
+          <p>Applicants:</p>
+          ${applicants || "No applicants"}
+        </div>
+      `;
+    });
+  }
+
+  function selectWorker(jobId, email) {
+    let job = jobs.find(j => j.id === jobId);
+
+    if (!job.selected.includes(email)) {
+      job.selected.push(email);
+    }
+
+    localStorage.setItem("jobs", JSON.stringify(jobs));
+    showPostedJobs();
+  }
+
+  function logout() {
+    location.reload();
+  }
+</script>
+
+</body>
+</html>
