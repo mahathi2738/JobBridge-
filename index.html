@@ -1,31 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>WorkerConnect Advanced</title>
+  <title>WorkerConnect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     body {
       font-family: Arial;
-      background: linear-gradient(to right, #4facfe, #00f2fe);
       margin: 0;
-      padding: 0;
+      background: #f5f7fa;
     }
 
-    h1 {
+    header {
+      background: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    header h2 {
+      color: #ff6600;
+    }
+
+    .hero {
       text-align: center;
+      padding: 40px 20px;
+    }
+
+    .hero h1 {
+      font-size: 28px;
+    }
+
+    .hero span {
+      color: #ff6600;
+    }
+
+    .btn {
+      display: block;
+      margin: 10px auto;
+      padding: 12px;
+      width: 80%;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .primary {
+      background: #ff6600;
       color: white;
-      padding: 20px;
+    }
+
+    .secondary {
+      background: white;
+      border: 1px solid #ccc;
     }
 
     .container {
-      max-width: 600px;
-      margin: 20px auto;
-      background: white;
       padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.2);
     }
 
-    input, select, button {
+    .card {
+      background: white;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    input, textarea {
       width: 100%;
       padding: 10px;
       margin: 8px 0;
@@ -33,222 +78,143 @@
       border: 1px solid #ccc;
     }
 
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #0056b3;
-    }
-
-    .card {
-      background: #f1f1f1;
-      padding: 10px;
-      margin: 10px 0;
+    video, img {
+      width: 100%;
+      margin-top: 10px;
       border-radius: 8px;
     }
 
     .hidden {
       display: none;
     }
-
-    .btn-small {
-      width: auto;
-      padding: 5px 10px;
-      margin-top: 5px;
-      background: green;
-    }
   </style>
 </head>
 
 <body>
 
-<h1>WorkerConnect</h1>
+<header>
+  <h2>WorkerConnect</h2>
+</header>
 
-<div class="container" id="authBox">
-  <h2>Register</h2>
-  <input id="name" placeholder="Name">
-  <input id="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
+<!-- HOME -->
+<div id="home" class="hero">
+  <h1>Connect with the <span>right workers, instantly</span></h1>
+  <p>Find part-time or full-time workers easily.</p>
 
-  <select id="role">
-    <option value="worker">Worker</option>
-    <option value="employer">Employer</option>
-  </select>
-
-  <button onclick="register()">Register</button>
-
-  <hr>
-
-  <h2>Login</h2>
-  <input id="loginEmail" placeholder="Email">
-  <input id="loginPassword" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
+  <button class="btn primary" onclick="showWorker()">I'm a Worker</button>
+  <button class="btn secondary" onclick="showEmployer()">I'm an Employer</button>
 </div>
 
-<!-- WORKER DASHBOARD -->
-<div id="workerDashboard" class="container hidden">
-  <h2>Available Jobs</h2>
-  <div id="jobList"></div>
+<!-- WORKER PROFILE -->
+<div id="workerPage" class="container hidden">
+  <h2>Create Worker Profile</h2>
 
-  <h3>Applied Jobs</h3>
-  <div id="appliedJobs"></div>
+  <input id="wName" placeholder="Name">
+  <input id="wSkill" placeholder="Skill (Electrician, Carpenter)">
+  <input id="wPhone" placeholder="Phone Number">
+  <textarea id="wDesc" placeholder="Job Description"></textarea>
 
-  <button onclick="logout()">Logout</button>
+  <label>Upload Video Resume</label>
+  <input type="file" id="videoUpload" accept="video/*">
+
+  <label>Upload Sample Images</label>
+  <input type="file" id="imageUpload" accept="image/*" multiple>
+
+  <button class="btn primary" onclick="saveProfile()">Save Profile</button>
+
+  <h3>Your Profile</h3>
+  <div id="profileDisplay"></div>
+
+  <button onclick="goHome()">Back</button>
 </div>
 
-<!-- EMPLOYER DASHBOARD -->
-<div id="employerDashboard" class="container hidden">
-  <h2>Post Job</h2>
+<!-- EMPLOYER PAGE -->
+<div id="employerPage" class="container hidden">
+  <h2>Available Workers</h2>
+  <div id="workersList"></div>
 
-  <input id="jobTitle" placeholder="Job Title">
-  <input id="jobLocation" placeholder="Location">
-  <input id="jobSalary" placeholder="Salary">
-  <input id="workersNeeded" placeholder="Workers Needed">
-
-  <button onclick="postJob()">Post Job</button>
-
-  <h3>Your Jobs</h3>
-  <div id="postedJobs"></div>
-
-  <button onclick="logout()">Logout</button>
+  <button onclick="goHome()">Back</button>
 </div>
 
 <script>
-  let users = JSON.parse(localStorage.getItem("users")) || [];
-  let jobs = JSON.parse(localStorage.getItem("jobs")) || [];
-  let currentUser = null;
+  let workers = JSON.parse(localStorage.getItem("workers")) || [];
 
-  function register() {
-    let user = {
-      name: name.value,
-      email: email.value,
-      password: password.value,
-      role: role.value
-    };
-
-    users.push(user);
-    localStorage.setItem("users", JSON.stringify(users));
-    alert("Registered!");
+  function showWorker() {
+    home.classList.add("hidden");
+    workerPage.classList.remove("hidden");
   }
 
-  function login() {
-    let user = users.find(u =>
-      u.email === loginEmail.value &&
-      u.password === loginPassword.value
-    );
-
-    if (!user) return alert("Invalid Login");
-
-    currentUser = user;
-    authBox.style.display = "none";
-
-    if (user.role === "worker") {
-      workerDashboard.classList.remove("hidden");
-      showJobs();
-      showAppliedJobs();
-    } else {
-      employerDashboard.classList.remove("hidden");
-      showPostedJobs();
-    }
+  function showEmployer() {
+    home.classList.add("hidden");
+    employerPage.classList.remove("hidden");
+    displayWorkers();
   }
 
-  function postJob() {
-    let job = {
-      id: Date.now(),
-      title: jobTitle.value,
-      location: jobLocation.value,
-      salary: jobSalary.value,
-      workersNeeded: workersNeeded.value,
-      applicants: [],
-      selected: []
-    };
-
-    jobs.push(job);
-    localStorage.setItem("jobs", JSON.stringify(jobs));
-    showPostedJobs();
-  }
-
-  function showJobs() {
-    jobList.innerHTML = "";
-
-    jobs.forEach(job => {
-      jobList.innerHTML += `
-        <div class="card">
-          <h4>${job.title}</h4>
-          <p>${job.location}</p>
-          <p>Salary: ${job.salary}</p>
-          <button class="btn-small" onclick="applyJob(${job.id})">Apply</button>
-        </div>
-      `;
-    });
-  }
-
-  function applyJob(id) {
-    let job = jobs.find(j => j.id === id);
-
-    if (!job.applicants.includes(currentUser.email)) {
-      job.applicants.push(currentUser.email);
-    }
-
-    localStorage.setItem("jobs", JSON.stringify(jobs));
-    showAppliedJobs();
-    alert("Applied!");
-  }
-
-  function showAppliedJobs() {
-    appliedJobs.innerHTML = "";
-
-    jobs.forEach(job => {
-      if (job.applicants.includes(currentUser.email)) {
-        appliedJobs.innerHTML += `
-          <div class="card">
-            <h4>${job.title}</h4>
-            <p>Status: ${job.selected.includes(currentUser.email) ? "Selected" : "Pending"}</p>
-          </div>
-        `;
-      }
-    });
-  }
-
-  function showPostedJobs() {
-    postedJobs.innerHTML = "";
-
-    jobs.forEach(job => {
-      let applicants = job.applicants.map(a => `
-        <div>
-          ${a}
-          <button onclick="selectWorker(${job.id}, '${a}')">Select</button>
-        </div>
-      `).join("");
-
-      postedJobs.innerHTML += `
-        <div class="card">
-          <h4>${job.title}</h4>
-          <p>${job.location}</p>
-          <p>Applicants:</p>
-          ${applicants || "No applicants"}
-        </div>
-      `;
-    });
-  }
-
-  function selectWorker(jobId, email) {
-    let job = jobs.find(j => j.id === jobId);
-
-    if (!job.selected.includes(email)) {
-      job.selected.push(email);
-    }
-
-    localStorage.setItem("jobs", JSON.stringify(jobs));
-    showPostedJobs();
-  }
-
-  function logout() {
+  function goHome() {
     location.reload();
+  }
+
+  function saveProfile() {
+    let worker = {
+      name: wName.value,
+      skill: wSkill.value,
+      phone: wPhone.value,
+      desc: wDesc.value,
+      video: "",
+      images: []
+    };
+
+    // Video
+    let videoFile = videoUpload.files[0];
+    if (videoFile) {
+      worker.video = URL.createObjectURL(videoFile);
+    }
+
+    // Images
+    let imageFiles = imageUpload.files;
+    for (let file of imageFiles) {
+      worker.images.push(URL.createObjectURL(file));
+    }
+
+    workers.push(worker);
+    localStorage.setItem("workers", JSON.stringify(workers));
+
+    alert("Profile Saved!");
+    displayProfile(worker);
+  }
+
+  function displayProfile(worker) {
+    profileDisplay.innerHTML = `
+      <div class="card">
+        <h3>${worker.name}</h3>
+        <p><b>Skill:</b> ${worker.skill}</p>
+        <p><b>Description:</b> ${worker.desc}</p>
+        <p><b>Phone:</b> ${worker.phone}</p>
+
+        ${worker.video ? `<video controls src="${worker.video}"></video>` : ""}
+
+        ${worker.images.map(img => `<img src="${img}">`).join("")}
+      </div>
+    `;
+  }
+
+  function displayWorkers() {
+    workersList.innerHTML = "";
+
+    workers.forEach(w => {
+      workersList.innerHTML += `
+        <div class="card">
+          <h3>${w.name}</h3>
+          <p><b>Skill:</b> ${w.skill}</p>
+          <p>${w.desc}</p>
+          <p><b>Contact:</b> ${w.phone}</p>
+
+          ${w.video ? `<video controls src="${w.video}"></video>` : ""}
+
+          ${w.images.map(img => `<img src="${img}">`).join("")}
+        </div>
+      `;
+    });
   }
 </script>
 
